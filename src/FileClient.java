@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -15,13 +14,11 @@ import java.net.UnknownHostException;
 public class FileClient {
 
     private Socket socket;
-    private BufferedReader socketIn;
     private DataInputStream dataSocketIn;
     private PrintWriter socketOut;
 
     private FileClient(InetAddress server, int port) throws IOException {
         socket = new Socket(server, port);
-        socketIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         dataSocketIn = new DataInputStream(socket.getInputStream());
         socketOut = new PrintWriter(socket.getOutputStream());
     }
@@ -38,15 +35,13 @@ public class FileClient {
     
     private void downloadFileUsingBytes() throws IOException{
     	String name;
-        String line;
         BufferedReader consoleIn =
                 new BufferedReader(new InputStreamReader(System.in));
         System.out.print("What file do you want? ");
         name = consoleIn.readLine();
         BufferedOutputStream outputStream = new BufferedOutputStream(
         		new FileOutputStream(new File(name)));
-
-//        fileOut = new PrintWriter(new FileWriter(name));
+        
         socketOut.println(name);
         socketOut.flush();
         byte[] buffer = new byte[1024];
@@ -57,25 +52,7 @@ public class FileClient {
         outputStream.close();
     }
     
-    private void downloadFile() throws IOException{
-    	String name;
-        String line;
-        PrintWriter fileOut;
-        BufferedReader consoleIn =
-                new BufferedReader(new InputStreamReader(System.in));
-        System.out.print("What file do you want? ");
-        name = consoleIn.readLine();
-        fileOut = new PrintWriter(new FileWriter(name));
-        socketOut.println(name);
-        socketOut.flush();
-        while ((line = socketIn.readLine()) != null) {
-            fileOut.println(line);
-        }
-        fileOut.close();
-    }
-    
     public void run() throws IOException {
-//        downloadFile();
     	downloadFileUsingBytes();
     }
 

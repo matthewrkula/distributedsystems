@@ -34,7 +34,7 @@ public class FileServer {
     }
     
     private void sendFileUsingBytes() throws IOException {
-    	String line, name;
+    	String name;
     	socket = serverSocket.accept();
     	System.out.println("Connection accepted, ready to send bytes.");
     	BufferedReader socketIn = new BufferedReader(new InputStreamReader(
@@ -52,29 +52,10 @@ public class FileServer {
     	}
     	fileIn.close();
     }
-    
-	private void sendFile() throws IOException {
-		socket = serverSocket.accept();
-		System.out.println("Connection accepted!");
-		BufferedReader socketIn = new BufferedReader(new InputStreamReader(
-				socket.getInputStream()));
-		PrintWriter socketOut = new PrintWriter(socket.getOutputStream());
-		String line, name;
-		name = socketIn.readLine();
-		File file = new File(rootDirectory, name);
-		BufferedReader fileIn = new BufferedReader(new FileReader(file));
-		System.out.println("Sending: " + name);
-		while ((line = fileIn.readLine()) != null) {
-			socketOut.println(line);
-			socketOut.flush();
-		}
-		fileIn.close();
-	}
 
     public void run() {
         while (true) {
             try {
-//                sendFile();
             	sendFileUsingBytes();
             } catch (IOException ex) {
                 System.err.println("IOException occured.  Closing connection.");
