@@ -30,9 +30,9 @@ public class FileServer {
     			socket.getInputStream()));
     	socketOut = new DataOutputStream(socket.getOutputStream());
     	
-//    	while(true){
+    	while(true){
     		readRequest();
-//    	}
+    	}
     }
     
     private void readRequest() throws IOException{
@@ -49,18 +49,28 @@ public class FileServer {
     private void downloadFile(String name) throws IOException{
     	System.out.println("Looking for file named " + name);
     	File file = new File(rootDirectory, name);
-    	DataInputStream fileIn = new DataInputStream(new FileInputStream(file));
     	byte[] buffer = new byte[4090];
     	int read = 0, total = 0;
     	
-    	System.out.println("Sending " + name);
-    	while((read = fileIn.read(buffer)) > -1){
-    		socketOut.write(buffer, 0, read);
-    		socketOut.flush();
-    		total += read;
+    	// Write the length of the file
+    	if(file.exists()){
+        	DataInputStream fileIn = new DataInputStream(new FileInputStream(file));
+
+	    	socketOut.writeLong(file.length());
+	    	
+	    	System.out.println("Sending " + name);
+	    	while(total < file.length()){
+	    		read = fileIn.read(buffer);
+	    		socketOut.write(buffer, 0, read);
+	    		socketOut.flush();
+	    		total += read;
+	    	}
+	    	fileIn.close();
+	    	System.out.println("Sent " + total + " bytes.");
+    	} else {
+    		System.out.println(name + " not found.");
+    		socketOut.writeLong(-1);
     	}
-    	fileIn.close();
-    	System.out.println("Sent " + total + " bytes.");
     }
 
     

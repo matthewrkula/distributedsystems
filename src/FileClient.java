@@ -31,7 +31,47 @@ public class FileClient {
         dataSocketIn = new DataInputStream(socket.getInputStream());
         socketOut = new PrintWriter(socket.getOutputStream());
     }
-
+    
+    private void downloadFileUsingBytes(String name) throws IOException{
+        byte[] buffer = new byte[4090];
+        int read = 0, total = 0;
+        
+        // Send name of file
+        socketOut.println(name);
+        socketOut.flush();
+        
+        // Get the length of the file
+        long length = dataSocketIn.readLong();
+        
+        if(length >= 0){
+            BufferedOutputStream outputStream = new BufferedOutputStream(
+            		new FileOutputStream(new File(name)));
+	        while (total < length) {
+	        	read = dataSocketIn.read(buffer);
+	            outputStream.write(buffer, 0, read);
+	            total += read;
+	        }
+	        outputStream.close();
+	        System.out.println("Downloaded " + total + " bytes.");
+        } else {
+        	System.out.println("File does not exist.");
+        }
+    }
+    
+    public void run() throws IOException {
+    	String name;
+    	BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));
+    	
+    	System.out.print("What file do you want? ");
+    	name = consoleIn.readLine();
+    	
+    	while(!name.equals("!")){
+    		downloadFileUsingBytes(name);
+    		System.out.print("What file do you want? ");
+        	name = consoleIn.readLine();
+    	}
+    }
+    
     private void close() {
         if (socket != null) {
             try {
@@ -40,39 +80,6 @@ public class FileClient {
                 System.err.println("IOException while closing socket.");
             }
         }
-    }
-    
-    private void downloadFileUsingBytes(String name) throws IOException{
-        BufferedOutputStream outputStream = new BufferedOutputStream(
-        		new FileOutputStream(new File(name)));
-        
-        socketOut.println(name);
-        socketOut.flush();
-        byte[] buffer = new byte[4090];
-        int read = 0;
-        int total = 0;
-        while ((read = dataSocketIn.read(buffer)) > -1) {
-            outputStream.write(buffer, 0, read);
-            total += read;
-        }
-        outputStream.close();
-        System.out.println("Downloaded " + total + " bytes.");
-    }
-    
-    public void run() throws IOException {
-    	String name;
-    	BufferedReader consoleIn =
-				new BufferedReader(new InputStreamReader(System.in));
-    	
-    	System.out.print("What file do you want? ");
-    	name = consoleIn.readLine();
-    	
-    	while(!name.equals("!")){
-    		downloadFileUsingBytes(name);
-    		reloadSocket();
-    		System.out.print("What file do you want? ");
-        	name = consoleIn.readLine();
-    	}
     }
 
     public static void main(String[] args) {
