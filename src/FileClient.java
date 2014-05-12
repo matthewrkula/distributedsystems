@@ -50,12 +50,27 @@ public class FileClient {
 	        	read = dataSocketIn.read(buffer);
 	            outputStream.write(buffer, 0, read);
 	            total += read;
+	            printProgress(total, length);
 	        }
 	        outputStream.close();
 	        System.out.println("Downloaded " + total + " bytes.");
         } else {
         	System.out.println("File does not exist.");
         }
+    }
+    
+    public void printProgress(int current, long total){
+    	float frac = total / 20.0f;
+    	
+    	StringBuffer buffer = new StringBuffer();
+    	buffer.append("[");
+    	for(int i=0; i < 20; i++){
+    		buffer.append(frac * i < current ? "=" : " ");
+    	}
+//    	buffer.append("] " + String.format("%d", (int)((float)current/total)*100) + "%\r");
+    	buffer.append("]\r");
+
+    	System.out.print(buffer.toString());
     }
     
     public void run() throws IOException {

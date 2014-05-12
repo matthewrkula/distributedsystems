@@ -52,7 +52,7 @@ public class FileServer {
     	byte[] buffer = new byte[4090];
     	int read = 0, total = 0;
     	
-    	// Write the length of the file
+    	// Write the length of the file (or -1 if the file does not exist
     	if(file.exists()){
         	DataInputStream fileIn = new DataInputStream(new FileInputStream(file));
 
