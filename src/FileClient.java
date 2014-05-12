@@ -16,9 +16,18 @@ public class FileClient {
     private Socket socket;
     private DataInputStream dataSocketIn;
     private PrintWriter socketOut;
+    
+    InetAddress server;
+    int port;
 
     private FileClient(InetAddress server, int port) throws IOException {
-        socket = new Socket(server, port);
+    	this.server = server;
+    	this.port = port;
+        reloadSocket();
+    }
+    
+    private void reloadSocket() throws IOException{
+    	socket = new Socket(server, port);
         dataSocketIn = new DataInputStream(socket.getInputStream());
         socketOut = new PrintWriter(socket.getOutputStream());
     }
@@ -33,27 +42,37 @@ public class FileClient {
         }
     }
     
-    private void downloadFileUsingBytes() throws IOException{
-    	String name;
-        BufferedReader consoleIn =
-                new BufferedReader(new InputStreamReader(System.in));
-        System.out.print("What file do you want? ");
-        name = consoleIn.readLine();
+    private void downloadFileUsingBytes(String name) throws IOException{
         BufferedOutputStream outputStream = new BufferedOutputStream(
         		new FileOutputStream(new File(name)));
         
         socketOut.println(name);
         socketOut.flush();
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[4090];
         int read = 0;
-        while ((read = dataSocketIn.read(buffer, 0, 1024)) > -1) {
+        int total = 0;
+        while ((read = dataSocketIn.read(buffer)) > -1) {
             outputStream.write(buffer, 0, read);
+            total += read;
         }
         outputStream.close();
+        System.out.println("Downloaded " + total + " bytes.");
     }
     
     public void run() throws IOException {
-    	downloadFileUsingBytes();
+    	String name;
+    	BufferedReader consoleIn =
+				new BufferedReader(new InputStreamReader(System.in));
+    	
+    	System.out.print("What file do you want? ");
+    	name = consoleIn.readLine();
+    	
+    	while(!name.equals("!")){
+    		downloadFileUsingBytes(name);
+    		reloadSocket();
+    		System.out.print("What file do you want? ");
+        	name = consoleIn.readLine();
+    	}
     }
 
     public static void main(String[] args) {

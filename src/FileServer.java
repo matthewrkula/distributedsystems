@@ -4,10 +4,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -17,40 +15,60 @@ public class FileServer {
     private File rootDirectory;
     
     private Socket socket;
+    private BufferedReader socketIn;
+    private DataOutputStream socketOut;
 
     private FileServer(File root, int port) throws IOException {
         rootDirectory = root;
         serverSocket = new ServerSocket(port);
     }
-
-    private void close() {
-        if (serverSocket != null) {
-            try {
-                serverSocket.close();
-            } catch (IOException ex) {
-                System.err.println("IOException occured while closing server socket.");
-            }
-        }
-    }
     
     private void sendFileUsingBytes() throws IOException {
-    	String name;
     	socket = serverSocket.accept();
     	System.out.println("Connection accepted, ready to send bytes.");
-    	BufferedReader socketIn = new BufferedReader(new InputStreamReader(
+    	socketIn = new BufferedReader(new InputStreamReader(
     			socket.getInputStream()));
-    	name = socketIn.readLine();
-    	DataOutputStream socketOut = new DataOutputStream(socket.getOutputStream());
+    	socketOut = new DataOutputStream(socket.getOutputStream());
+    	
+//    	while(true){
+    		readRequest();
+//    	}
+    }
+    
+    private void readRequest() throws IOException{
+    	String name = socketIn.readLine();
+    	
+    	if(name.equals("*")){
+    		printAllFiles();
+    		socketIn.close();
+    		return;
+    	}
+    	downloadFile(name);
+    }
+    
+    private void downloadFile(String name) throws IOException{
+    	System.out.println("Looking for file named " + name);
     	File file = new File(rootDirectory, name);
     	DataInputStream fileIn = new DataInputStream(new FileInputStream(file));
+    	byte[] buffer = new byte[4090];
+    	int read = 0, total = 0;
+    	
     	System.out.println("Sending " + name);
-    	byte[] buffer = new byte[1024];
-    	int read;
-    	while((read = fileIn.read(buffer, 0, 1024)) > -1){
+    	while((read = fileIn.read(buffer)) > -1){
     		socketOut.write(buffer, 0, read);
     		socketOut.flush();
+    		total += read;
     	}
     	fileIn.close();
+    	System.out.println("Sent " + total + " bytes.");
+    }
+
+    
+    private void printAllFiles() throws IOException{
+    	for(File file : rootDirectory.listFiles()){
+    		System.out.println(" - " + file.getName());
+    	}
+    	socketOut.close();
     }
 
     public void run() {
@@ -71,6 +89,17 @@ public class FileServer {
             }
         }
     }    
+    
+
+    private void close() {
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException ex) {
+                System.err.println("IOException occured while closing server socket.");
+            }
+        }
+    }
 
     public static void main(String[] args) {
         System.setProperty("line.separator", "\r\n");
