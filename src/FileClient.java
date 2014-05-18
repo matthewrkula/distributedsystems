@@ -32,8 +32,8 @@ public class FileClient {
         socketOut = new PrintWriter(socket.getOutputStream());
     }
     
-    private void downloadFileUsingBytes(String name) throws IOException{
-        byte[] buffer = new byte[4090];
+    private void downloadFile(String name) throws IOException{
+        byte[] buffer = new byte[2048];
         int read = 0, total = 0;
         
         // Send name of file
@@ -49,6 +49,7 @@ public class FileClient {
 	        while (total < length) {
 	        	read = dataSocketIn.read(buffer);
 	            outputStream.write(buffer, 0, read);
+	            outputStream.flush();
 	            total += read;
 	            printProgress(total, length);
 	        }
@@ -59,6 +60,24 @@ public class FileClient {
         }
     }
     
+    private void readAllFiles() throws IOException {
+    	socketOut.println("*");
+    	socketOut.flush();
+    	
+    	int length = dataSocketIn.readInt();
+    	byte[] nameBuffer = new byte[1024];
+    	
+    	while(length > 0){
+    		dataSocketIn.read(nameBuffer, 0, length);
+    		StringBuilder builder = new StringBuilder();
+    		for(int i=0; i < length; i++){
+    			builder.append((char)nameBuffer[i]);
+    		}
+    		System.out.println(builder.toString());
+    		length = dataSocketIn.readInt();
+    	}
+    }
+    
     public void printProgress(int current, long total){
     	float frac = total / 20.0f;
     	
@@ -67,7 +86,6 @@ public class FileClient {
     	for(int i=0; i < 20; i++){
     		buffer.append(frac * i < current ? "=" : " ");
     	}
-//    	buffer.append("] " + String.format("%d", (int)((float)current/total)*100) + "%\r");
     	buffer.append("]\r");
 
     	System.out.print(buffer.toString());
@@ -81,7 +99,12 @@ public class FileClient {
     	name = consoleIn.readLine();
     	
     	while(!name.equals("!")){
-    		downloadFileUsingBytes(name);
+    		
+    		if(name.equals("*")){
+    			readAllFiles();
+    		} else {
+        		downloadFile(name);
+    		}
     		System.out.print("What file do you want? ");
         	name = consoleIn.readLine();
     	}

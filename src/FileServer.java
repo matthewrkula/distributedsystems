@@ -14,81 +14,51 @@ public class FileServer {
     private ServerSocket serverSocket;
     private File rootDirectory;
     
-    private Socket socket;
-    private BufferedReader socketIn;
-    private DataOutputStream socketOut;
-
     private FileServer(File root, int port) throws IOException {
         rootDirectory = root;
         serverSocket = new ServerSocket(port);
     }
-    
-    private void sendFileUsingBytes() throws IOException {
-    	socket = serverSocket.accept();
-    	System.out.println("Connection accepted, ready to send bytes.");
-    	socketIn = new BufferedReader(new InputStreamReader(
-    			socket.getInputStream()));
-    	socketOut = new DataOutputStream(socket.getOutputStream());
-    	
-    	while(true){
-    		readRequest();
-    	}
-    }
-    
-    private void readRequest() throws IOException{
-    	String name = socketIn.readLine();
-    	
-    	if(name.equals("*")){
-    		printAllFiles();
-    		socketIn.close();
-    		return;
-    	}
-    	downloadFile(name);
-    }
-    
-    private void downloadFile(String name) throws IOException{
-    	System.out.println("Looking for file named " + name);
-    	File file = new File(rootDirectory, name);
-    	byte[] buffer = new byte[4090];
-    	int read = 0, total = 0;
-    	
-    	// Write the length of the file (or -1 if the file does not exist
-    	if(file.exists()){
-        	DataInputStream fileIn = new DataInputStream(new FileInputStream(file));
-
-	    	socketOut.writeLong(file.length());
-	    	
-	    	System.out.println("Sending " + name);
-	    	while(total < file.length()){
-	    		read = fileIn.read(buffer);
-	    		socketOut.write(buffer, 0, read);
-	    		socketOut.flush();
-	    		total += read;
-	    	}
-	    	fileIn.close();
-	    	System.out.println("Sent " + total + " bytes.");
-    	} else {
-    		System.out.println(name + " not found.");
-    		socketOut.writeLong(-1);
-    	}
-    }
-
-    
-    private void printAllFiles() throws IOException{
-    	for(File file : rootDirectory.listFiles()){
-    		System.out.println(" - " + file.getName());
-    	}
-    	socketOut.close();
-    }
 
     public void run() {
-        while (true) {
-            try {
-            	sendFileUsingBytes();
-            } catch (IOException ex) {
-                System.err.println("IOException occured.  Closing connection.");
-            } finally {
-                if (socket != null) {
+		try {
+	    	Socket socket;
+
+			while (true) {
+				socket = serverSocket.accept();
+				RequestHandler handler = new RequestHandler(socket);
+				new Thread(handler).start();
+			}
+			
+		} catch (IOException ex) {
+			System.err.println("IOException occured.  Closing connection.");
+		}
+    }    
+    
+    private class RequestHandler implements Runnable {
+    	
+    	private Socket socket;
+        private BufferedReader socketIn;
+        private DataOutputStream socketOut;
+
+    	
+    	public RequestHandler(Socket socket) {
+    		this.socket = socket;
+    		System.out.println("Created new thread for connection.");
+    	}
+    	
+    	@Override
+		public void run() {
+			try {
+				socketIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				socketOut = new DataOutputStream(socket.getOutputStream());
+
+				while (true) {
+					readRequest();
+				}
+			} catch (IOException e) {
+				System.err.println("Error occured in RequestHandler run function");
+			} finally {
+				if (socket != null) {
                     try {
                         socket.close();
                         System.out.println("Connection closed.");
@@ -96,20 +66,56 @@ public class FileServer {
                         System.err.println("IOException occured while closing connection.");
                     }
                 }
-            }
+			}
+		}
+    	
+        private void readRequest() throws IOException{
+        	String name = socketIn.readLine();
+        	System.out.println("Received request for: " + name);
+        	
+        	if(name.equals("*")){
+        		printAllFiles();
+        	} else {
+        		downloadFile(name);
+        	}
         }
-    }    
-    
-    private class RequestHandler implements Runnable {
-    	
-    	public RequestHandler(Socket socket) {
-    		
-    	}
-    	
-    	@Override
-    	public void run() {
-    		
-    	}
+        
+        private void downloadFile(String name) throws IOException{
+        	File file = new File(rootDirectory, name);
+        	byte[] buffer = new byte[4096];
+        	int read = 0, total = 0;
+        	
+        	// Write the length of the file (or -1 if the file does not exist)
+        	if(file.exists()){
+            	DataInputStream fileIn = new DataInputStream(new FileInputStream(file));
+
+    	    	socketOut.writeLong(file.length());
+    	    	
+    	    	System.out.println("Sending " + name);
+    	    	while(total < file.length()){
+    	    		read = fileIn.read(buffer);
+    	    		socketOut.write(buffer, 0, read);
+    	    		socketOut.flush();
+    	    		total += read;
+    	    	}
+    	    	fileIn.close();
+    	    	System.out.println("Sent " + total + " bytes.");
+        	} else {
+        		System.out.println(name + " not found.");
+        		socketOut.writeLong(-1);
+        	}
+        }
+        
+		private void printAllFiles() throws IOException {
+			for (File file : rootDirectory.listFiles()) {
+				socketOut.writeInt(file.getName().length());
+				socketOut.flush();
+				socketOut.write(file.getName().getBytes());
+				socketOut.flush();
+			}
+			socketOut.writeInt(0);
+			socketOut.flush();
+		}
     	
     }
     
