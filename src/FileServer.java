@@ -100,6 +100,19 @@ public class FileServer {
         }
     }    
     
+    private class RequestHandler implements Runnable {
+    	
+    	public RequestHandler(Socket socket) {
+    		
+    	}
+    	
+    	@Override
+    	public void run() {
+    		
+    	}
+    	
+    }
+    
 
     private void close() {
         if (serverSocket != null) {

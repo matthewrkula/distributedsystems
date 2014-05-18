@@ -53,7 +53,7 @@ public class FileClient {
 	            printProgress(total, length);
 	        }
 	        outputStream.close();
-	        System.out.println("Downloaded " + total + " bytes.");
+	        System.out.println("\nDownloaded " + total + " bytes.");
         } else {
         	System.out.println("File does not exist.");
         }
