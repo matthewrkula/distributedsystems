@@ -60,9 +60,10 @@ public class FileClient {
         }
     }
     
-    private void readAllFiles() throws IOException {
+    private void printAllFiles() throws IOException {
     	socketOut.println("*");
     	socketOut.flush();
+		System.out.println();
     	
     	int length = dataSocketIn.readInt();
     	byte[] nameBuffer = new byte[1024];
@@ -73,9 +74,11 @@ public class FileClient {
     		for(int i=0; i < length; i++){
     			builder.append((char)nameBuffer[i]);
     		}
-    		System.out.println(builder.toString());
+    		System.out.println("\t" + builder.toString());
+
     		length = dataSocketIn.readInt();
     	}
+		System.out.println();
     }
     
     public void printProgress(int current, long total){
@@ -99,9 +102,8 @@ public class FileClient {
     	name = consoleIn.readLine();
     	
     	while(!name.equals("!")){
-    		
     		if(name.equals("*")){
-    			readAllFiles();
+    			printAllFiles();
     		} else {
         		downloadFile(name);
     		}
