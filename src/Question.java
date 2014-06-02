@@ -1,3 +1,5 @@
+import java.math.BigInteger;
+
 
 public class Question {
 	String question;
@@ -5,12 +7,14 @@ public class Question {
 	Question noChild;
 	Question yesChild;
 	
+	long creatorId = -1;
 	
 	public Question(String question){
 		this.question = question;
 	}
 	
-	public Question(String question, String answer){
+	public Question(long id, String question, String answer){
+		this.creatorId = id;
 		this.question = question;
 		this.answer = answer;
 	}
@@ -19,6 +23,10 @@ public class Question {
 		this.question = question;
 		this.noChild = no;
 		this.yesChild = yes;
+	}
+	
+	public boolean isLeafNode(){
+		return this.answer != null;
 	}
 	
 	@Override
