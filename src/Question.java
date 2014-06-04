@@ -1,20 +1,20 @@
-import java.math.BigInteger;
+import java.io.Serializable;
 
 
-public class Question {
+public class Question implements Serializable {
 	String question;
 	String answer;
 	Question noChild;
 	Question yesChild;
 	
-	long creatorId = -1;
+	transient GameSession createdBy = null;
 	
 	public Question(String question){
 		this.question = question;
 	}
 	
-	public Question(long id, String question, String answer){
-		this.creatorId = id;
+	public Question(GameSession session, String question, String answer){
+		this.createdBy = session;
 		this.question = question;
 		this.answer = answer;
 	}

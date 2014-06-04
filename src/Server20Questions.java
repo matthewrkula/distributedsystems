@@ -1,3 +1,8 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -10,15 +15,29 @@ public class Server20Questions {
 	ServerSocket serverSocket;
 	Socket acceptSocket;
 	
+	String dataFileName = "database.dat";
+	File file = new File(dataFileName);
+	ObjectOutputStream objectOutputStream;
+	ObjectInputStream objectInputStream;
+	
 	long idIncrementer = 0;
 	
 	ArrayList<GameSession> games;
 	
 	public void startServer() throws Exception {
 		serverSocket = new ServerSocket(6001);
-		rootQuestion = new Question(-1, null, "Barack Obama");
 		games = new ArrayList<GameSession>();
 		
+		if(file.exists() && file.length() > 0) {
+			System.out.println("data found!");
+			objectInputStream = new ObjectInputStream(new FileInputStream(file));
+			rootQuestion = (Question)objectInputStream.readObject();
+			objectInputStream.close();
+		} else {
+			System.out.println("data not found!");
+			rootQuestion = new Question(null, null, "Barack Obama");
+		}
+			
 		while(true){
 			acceptSocket = serverSocket.accept();
 			GameSession game = new GameSession(++idIncrementer, this, acceptSocket, rootQuestion);
@@ -35,17 +54,32 @@ public class Server20Questions {
 		this.rootQuestion = question;
 	}
 	
+	public Question getRootQuestion(){
+		return this.rootQuestion;
+	}
+	
+	public synchronized void saveTreeToDisk(){
+		try {
+			objectOutputStream = new ObjectOutputStream(new FileOutputStream(file));
+			objectOutputStream.writeObject(rootQuestion);
+			objectOutputStream.flush();
+			objectOutputStream.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void notifyPlayer(String name, Question question){
-		System.out.println("Notifying about " + name + " to thread " + question.creatorId);
-		if(question.creatorId <= 0){		// Original root question
+		if(question.createdBy == null){		// Original root question
 			return;
 		}
 		
+		System.out.println("Notifying about " + name + " to " + question.createdBy.name);
+
 		synchronized(games){
 			for(GameSession game : games){
-				if(game.id == question.creatorId){
+				if(game.equals(question.createdBy)){
 					game.print(name + " just thought of " + question.answer + "!");
-					System.out.println("Found him!");
 				}
 			}
 			System.out.println("Done notifying about " + name);
