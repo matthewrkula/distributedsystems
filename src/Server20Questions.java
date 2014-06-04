@@ -29,12 +29,12 @@ public class Server20Questions {
 		games = new ArrayList<GameSession>();
 		
 		if(file.exists() && file.length() > 0) {
-			System.out.println("data found!");
+			System.out.println("Saved questions found! Loading previous question tree...");
 			objectInputStream = new ObjectInputStream(new FileInputStream(file));
 			rootQuestion = (Question)objectInputStream.readObject();
 			objectInputStream.close();
 		} else {
-			System.out.println("data not found!");
+			System.out.println("No saved questions found.");
 			rootQuestion = new Question(null, null, "Barack Obama");
 		}
 			
@@ -82,7 +82,6 @@ public class Server20Questions {
 					game.print(name + " just thought of " + question.answer + "!");
 				}
 			}
-			System.out.println("Done notifying about " + name);
 		}
 	}
 	

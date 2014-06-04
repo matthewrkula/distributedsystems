@@ -103,9 +103,10 @@ public class GameSession implements Runnable {
 	}
 
 	private void askForNewQuestion() throws IOException {
-		print("Who were you thinking of?");
+		print("Who are you thinking of?");
 		String name = getInputWhileBlocking();
-		print("Please enter a new question!");
+		print("Please enter a yes/no question to distinguish "
+				+ currentQuestion.answer + " from " + name + "!");
 		String question = getInputWhileBlocking();
 		Question newAnswer = new Question(this, null, name);
 
